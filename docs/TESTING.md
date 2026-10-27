@@ -2,6 +2,10 @@
 
 Test environment: PHP 8.3.36, MariaDB 11.4, Composer-locked PhpSpreadsheet 5.10.0 and Dompdf 3.1.6. All application tests use a fake Telegram transport and synthetic records. No real Telegram messages were sent, no live webhook was registered and no production deployment was performed.
 
+## Immediate-reply update validation
+
+The update passed 21 additional assertions covering immediate processing/delivery, duplicate webhooks, rapid message ordering, per-user lock contention, independent conversations, concurrent cron/webhook delivery, ordered backoff, failed-update blocking, owner retry recovery, stale delivery recovery and API rate-limit fallback. The original 63 integration and 36 HTTP assertions still pass. An actual HTTP webhook was verified to persist, process and send its reply through fake transport without running cron. The updater was applied to an extracted original release and rerun to verify idempotency; the patched release successfully responded through its original Composer autoloader. Live Ahost response times still require testing after installing the update.
+
 ## Executed checks
 
 - **63 PHP integration assertions passed** against MariaDB: membership gating and recovery, exact Uzbek greeting/success text, own-contact enforcement, draft back/pause/resume, 20 MB rejection, private storage, document/photo acceptance, registration closure, duplicate updates/submissions, transactional failure/retry, business-day/holiday/timezone calculation, cohort/drop-off/overdue statistics, filtering and SQL injection handling, XLSX text cells, PDF/font output, queue deduplication/backoff/permanent errors, login/CSRF/roles, notes/ratings/audit, explicit notification preview/send, session revocation and login rate limiting.

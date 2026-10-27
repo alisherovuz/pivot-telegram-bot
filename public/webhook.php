@@ -13,6 +13,15 @@ try {
     if(!is_array($update)) { http_response_code(400); exit; }
     require (require __DIR__.'/paths.php').'/app/bootstrap.php';
     (new Pivot\Bot($db,$telegram,$config))->ingest($update);
+    // Persistence precedes acknowledgement. Continue even if Telegram disconnects.
+    ignore_user_abort(true);
     header('Content-Type: application/json'); echo '{"ok":true}';
+    if(function_exists('fastcgi_finish_request')) fastcgi_finish_request();
+    try {
+        (new Pivot\Worker($db,$telegram,$config))->respond($update);
+    } catch(Throwable $e) {
+        // The durable update/outbox remains available for cron; don't expose credentials.
+        error_log('Pivot immediate worker failed: '.get_class($e));
+    }
 } catch (JsonException|InvalidArgumentException) { http_response_code(400); }
 catch (Throwable) { error_log('Pivot webhook persistence failed; inspect configuration/database.'); http_response_code(503); }

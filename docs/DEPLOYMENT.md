@@ -10,6 +10,8 @@ The host must allow outbound verified HTTPS to `api.telegram.org`, private writa
 
 ## 2. Build or use the deployment ZIP
 
+For an existing installation, first read [the immediate-reply update instructions](FAST-REPLIES.md). The original preserved artifact requires that update; a newly rebuilt full archive from current source includes the fix.
+
 The generated artifact is `dist/pivot-deployment.zip` with a sibling SHA-256 checksum. It contains application code, SQL, configuration example, instructions, and locked Composer dependencies including Unicode fonts. It contains no local configuration, credentials, test database, user files or Git metadata.
 
 To rebuild on a development machine with PHP 8.3 and Composer:
@@ -122,9 +124,9 @@ In cPanel Cron Jobs, schedule once every minute (or a permitted shorter interval
 * * * * * /path/to/php83 /home/CPANELUSER/pivot/bin/cron.php >> /home/CPANELUSER/pivot/storage/cron.log 2>&1
 ```
 
-Common cPanel/CloudLinux paths include `/usr/local/bin/ea-php83` or `/opt/alt/php83/usr/bin/php`; **verify your Ahost account's path**, do not assume either. The CLI must have the same extensions/configuration as web PHP. The command has no user-supplied token argument and is not an HTTP endpoint. Rotate the private log to prevent quota exhaustion.
+Common cPanel/CloudLinux paths include `/usr/local/bin/ea-php83` or `/opt/alt/php83/usr/bin/php`; **verify your Ahost account's path**, do not assume either. The CLI must have the same extensions/configuration as web PHP. The command handles deferred work, administrative notifications and reminders; normal bot replies run immediately through the webhook. The command has no user-supplied token argument and is not an HTTP endpoint. Rotate the private log to prevent quota exhaustion.
 
-Cron persists internal overdue reminders and attempts message deliveries. Check the console's Delivery queue, webhook processing errors and cron log. One-minute cron means responses may arrive on the next minute. Processing failures retry up to eight times; delivery failures retry up to five times, with rate-limit delay. Fix configuration or permissions before using owner retry controls. An API timeout can duplicate a notification, but cannot create a duplicate application.
+Cron persists internal overdue reminders and attempts message deliveries. Check the console's Delivery queue, webhook processing errors and cron log. Deferred retries can arrive on a later cron tick; ordinary bot replies do not wait for cron. Processing failures retry up to eight times; delivery failures retry up to five times, with rate-limit delay. Fix configuration or permissions before using owner retry controls. An API timeout can duplicate a notification, but cannot create a duplicate application.
 
 ## 10. Configure the event and go-live checks
 

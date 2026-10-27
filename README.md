@@ -1,6 +1,10 @@
 # Pivot Uzbekistan · Telegram applications & review workspace
 
-PHP 8.3+ and MySQL/MariaDB application for Ahost shared hosting. Telegram sends HTTPS webhooks; a bounded cron task processes persisted updates and delivers queued messages. No permanent application worker is required.
+PHP 8.3+ and MySQL/MariaDB application for Ahost shared hosting. Telegram sends HTTPS webhooks; each request persists and processes its conversation immediately. A bounded cron task recovers retries and delivers administrative messages. No permanent application worker is required.
+
+## Existing Ahost installation
+
+Install the [immediate-reply update](docs/FAST-REPLIES.md) to remove the original once-per-minute conversational delay. The original `dist/pivot-deployment.zip` is preserved unchanged; existing and new installations using that archive need this small update.
 
 ## Start here
 
