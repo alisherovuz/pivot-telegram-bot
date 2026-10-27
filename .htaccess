@@ -1,0 +1,2 @@
+# Defense in depth. The document root MUST be public/, never this directory.
+Require all denied

@@ -1,0 +1,10 @@
+/vendor/
+/config/local.php
+/storage/*
+!/storage/.gitkeep
+/dist/*
+!dist/.gitkeep
+/.dev/*
+
+__pycache__/
+*.pyc

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/.."
+args=(--rm --user "$(id -u):$(id -g)" --network pivot-dev -v "$PWD:/app")
+if [[ -f /etc/ssl/certs/ca-certificates.crt ]]; then
+ args+=(-v /etc/ssl/certs/ca-certificates.crt:/run/ca.pem:ro -e COMPOSER_CAFILE=/run/ca.pem -e GIT_SSL_CAINFO=/run/ca.pem)
+fi
+args+=(-e COMPOSER_HOME=/tmp/composer)
+exec docker run "${args[@]}" pivot-php:8.3 "$@"

@@ -1,0 +1,28 @@
+{
+  "name": "pivot/telegram-bot",
+  "description": "Pivot Uzbekistan Demo Day applications and review console",
+  "type": "project",
+  "require": {
+    "php": "^8.3",
+    "ext-pdo": "*",
+    "ext-pdo_mysql": "*",
+    "ext-curl": "*",
+    "ext-mbstring": "*",
+    "ext-fileinfo": "*",
+    "phpoffice/phpspreadsheet": "^5.0",
+    "dompdf/dompdf": "^3.1"
+  },
+  "autoload": {
+    "psr-4": {
+      "Pivot\\": "app/"
+    }
+  },
+  "config": {
+    "sort-packages": true,
+    "allow-plugins": {}
+  },
+  "scripts": {
+    "test": "php tests/run.php"
+  },
+  "license": "proprietary"
+}

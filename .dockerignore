@@ -1,0 +1,6 @@
+.git
+vendor
+storage
+dist
+.dev
+config/local.php

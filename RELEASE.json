@@ -1,0 +1,22 @@
+{
+  "build": "Pivot Uzbekistan initial tested application",
+  "artifact": "pivot-deployment.zip",
+  "artifact_bytes": 28721810,
+  "artifact_sha256": "65f4ec1d36d274a876c049fa406b32c95608d50c5c068f6b9a0543b34ad56027",
+  "artifact_manifest_files": 4430,
+  "preserved_at": "2026-10-27T18:15:51.060206+05:00",
+  "validation": {
+    "php_integration_assertions_passed": 63,
+    "http_assertions_passed": 36,
+    "desktop_mobile_layout_checks_passed": 16,
+    "extracted_release_smoke_test": "passed",
+    "composer_audit": {
+      "command": "composer audit --locked --no-interaction",
+      "exit_code": 0,
+      "result": "No security vulnerability advisories found.",
+      "note": "Supersedes the earlier network-blocked audit reported in the packaged documentation. No dependency versions were changed."
+    }
+  },
+  "privacy_review": "Source and artifact reviewed: no real credentials, applicant records, private uploads or local configuration. Source tests contain synthetic fixtures only.",
+  "deployment": "Not deployed; live Telegram/Ahost verification remains pending."
+}
