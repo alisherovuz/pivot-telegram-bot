@@ -8,6 +8,8 @@ Install the [immediate-reply update](docs/FAST-REPLIES.md) to remove the origina
 
 Then install the [Telegram admin update](docs/TELEGRAM-ADMIN.md) and link your numeric Telegram ID to an existing admin account. The private `/admin` panel supports applications, original documents, Excel/PDF reports, statistics, confirmed status changes, explicit applicant messages, and owner registration controls.
 
+For installations with that panel already enabled, the [simpler admin menu update](docs/SIMPLE-ADMIN.md) reduces visible controls and edits menus in place. Existing admin links are preserved.
+
 ## Start here
 
 - [Ahost/cPanel installation, BotFather, webhook and cron guide](docs/DEPLOYMENT.md)

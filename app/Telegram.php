@@ -12,6 +12,8 @@ final class Telegram implements TelegramTransport
         $raw=curl_exec($ch); $code=(int)curl_getinfo($ch,CURLINFO_HTTP_CODE); curl_close($ch);
         if ($raw===false) { throw new TelegramException(503); }
         $r=json_decode($raw,true);
+        // Repeated taps and retries can ask Telegram to apply the same menu twice.
+        if($method==='editMessageText' && is_array($r) && ($r['error_code']??0)===400 && str_contains(strtolower((string)($r['description']??'')),'message is not modified')) return ['message_id'=>$data['message_id']??null];
         if (!is_array($r) || empty($r['ok'])) { throw new TelegramException((int)($r['error_code']??$code), (int)($r['parameters']['retry_after']??0)); }
         return is_array($r['result']??null)?$r['result']:['ok'=>(bool)($r['result']??false)];
     }

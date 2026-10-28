@@ -1,5 +1,7 @@
 # Telegram admin panel
 
+The current source uses the [simpler menu](SIMPLE-ADMIN.md). If you installed the original Telegram admin ZIP, apply that small follow-up update for fewer visible buttons and navigation in one message.
+
 Send `/admin` in a private chat with the bot. The panel is denied by default. A numeric Telegram ID must first be linked to an active website admin using the hosting terminal. No bot token or password is entered in Telegram. The bot checks sender/chat identity, account activation and roles on every action; queued admin messages/documents also recheck the link before delivery.
 
 ## Update an existing Ahost installation
@@ -28,14 +30,14 @@ Fresh source installations already contain the code and need only steps 3–5. L
 
 ## Controls
 
-- Applications: six per page, filters for all five statuses, applicant/contact details and original filenames.
+- Applications: four per page in the current source, filters for all five statuses, applicant/contact details and original filenames.
 - Original file: sends the actual private attachment as a Telegram document, with its original filename. Files are not published through a public URL.
 - Application PDF, filtered application Excel/PDF, and statistics Excel/PDF: files are generated and uploaded privately. Temporary export files have owner-only permissions and are deleted after each attempt, including failures.
 - Review status: preview, then confirm. Preserves assignment and writes to the same database/audit trail as the website. It does not implicitly notify the applicant.
 - Applicant message: previews the configured notification template using the current application status. Confirming queues exactly that text for the existing cron to deliver, normally within one minute. Confirmation expires after five minutes, is bound to the initiating admin chat, is single-use, and is invalidated by cancellation or a new preview. A status change after preview requires a fresh preview.
 - Statistics: all-time counts and status breakdown. The exported statistics contain the existing cohort definitions.
 - Owners: registration on/off, with confirmation. The configured deadline still applies even when the registration switch is open. Reviewers cannot toggle it.
-- Delivery counts: pending/failed counts in the menu. Detailed retry controls remain on the website.
+- Detailed delivery counts and retry controls are available on the website.
 
 The website remains available for search/date filters, notes, ratings, reviewer assignment, editing event settings/templates, managing accounts and detailed queue troubleshooting. The bot panel covers reviewing applications and getting documents without leaving Telegram.
 

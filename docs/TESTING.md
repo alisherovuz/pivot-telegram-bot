@@ -12,6 +12,12 @@ The private bot panel passed 64 additional assertions: identity linking and deni
 
 The 63 base integration assertions, 21 immediate-response/concurrency assertions and 36 HTTP assertions also pass with the new code. PHP syntax checks pass. The small installer was tested against the original deployment ZIP plus the immediate-response patch, including a second idempotent run. The patched release resolved new classes through its original Composer autoloader, and the CLI link/revoke flow succeeded. No database migration or new dependencies are required.
 
+## Simpler Telegram menu validation
+
+The simplified menu passed 28 interaction assertions, covering the smaller home/card menus, editing the tapped message, independent per-admin Back navigation, confirmation/cancellation, duplicate updates, hidden secondary controls, report navigation, owner-only settings, fallback from uneditable messages, rate limits and revoked queued access. Five transport assertions intercept cURL without making network requests: unchanged edits are successful, missing messages still trigger fallback, rate-limit delays survive, and document uploads remain multipart.
+
+The base integration (63), HTTP (36), immediate-reply (21) and Telegram admin regression suites also passed. The latter now reports 58 assertions because the smaller list has fewer buttons to check against Telegram's callback-size limit; permission and document tests remain present. All changed PHP files pass syntax checks. The four-file updater was installed twice on a copy of the deployed admin release to check success and idempotency. Live Telegram rendering must still be checked after Ahost installation.
+
 ## Executed checks
 
 - **63 PHP integration assertions passed** against MariaDB: membership gating and recovery, exact Uzbek greeting/success text, own-contact enforcement, draft back/pause/resume, 20 MB rejection, private storage, document/photo acceptance, registration closure, duplicate updates/submissions, transactional failure/retry, business-day/holiday/timezone calculation, cohort/drop-off/overdue statistics, filtering and SQL injection handling, XLSX text cells, PDF/font output, queue deduplication/backoff/permanent errors, login/CSRF/roles, notes/ratings/audit, explicit notification preview/send, session revocation and login rate limiting.

@@ -35,6 +35,14 @@ final class Queue {
                     if($r['method']==='adminDocument') {
                         if($r['kind']!=='telegram_admin') throw new TelegramException(403);
                         $result=AdminBot::document($this->db,$this->telegram,$this->config,$payload);
+                    } elseif($r['kind']==='telegram_admin' && $r['method']==='editMessageText') {
+                        try { $result=$this->telegram->call('editMessageText',$payload); }
+                        catch(TelegramException $e) {
+                            // A deleted or no-longer-editable menu gets a fresh replacement.
+                            if($e->apiCode!==400) throw $e;
+                            unset($payload['message_id']);
+                            $result=$this->telegram->call('sendMessage',$payload);
+                        }
                     } else $result=$this->telegram->call($r['method'],$payload);
                     $this->db->run("UPDATE notifications SET status='sent',sent_at=NOW(),locked_at=NULL,last_error=NULL,telegram_message_id=? WHERE id=?",[$result['message_id']??null,$r['id']]);
                 } catch (TelegramException $e) {

@@ -65,7 +65,7 @@ final class Bot
         $this->db->run('INSERT INTO users(id,username,first_seen,last_seen) VALUES(?,?,NOW(),NOW()) ON DUPLICATE KEY UPDATE username=VALUES(username),last_seen=NOW()',[$user,$from['username']??null]);
         $this->db->one('SELECT id FROM users WHERE id=? FOR UPDATE',[$user]);
         if($callback) $this->queue->add('callback:'.$this->updateId,$user,['callback_query_id'=>$callback['id']],'bot',null,'answerCallbackQuery');
-        if((new AdminBot($this->db,$this->queue))->handle($user,$text,$this->updateId)) return;
+        if((new AdminBot($this->db,$this->queue))->handle($user,$text,$this->updateId,isset($callback['message']['message_id'])?(int)$callback['message']['message_id']:null)) return;
         $settings=$this->db->settings(); $draft=$this->db->one('SELECT * FROM drafts WHERE user_id=?',[$user]);
         $app=$this->db->one('SELECT * FROM applications WHERE user_id=?',[$user]);
         if($text===self::ABOUT || $text==='/about') {
