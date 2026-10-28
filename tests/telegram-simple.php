@@ -50,7 +50,7 @@ $before=count($tg->calls);$worker->respond($update);verify(count($tg->calls)===$
 incoming($user,'adm:more:'.$id);verify(routes()===['adm:doc:applicationpdf:'.$id.':all','adm:notify:'.$id,'adm:app:'.$id],'secondary actions stay available under More options');
 incoming($user,'adm:filters');verify(count(buttons())===7,'dedicated filter screen contains statuses and Back');
 incoming($user,'adm:exports:3');verify(routes()===['adm:doc:xlsx:0:3','adm:doc:pdf:0:3','adm:list:all:1'],'report choices preserve requested status filter');
-incoming($user,'adm:stats');verify(count(buttons())===2 && str_contains(screen()[1]['text'],'Awaiting review'),'statistics starts with brief summary and one report action');
+incoming($user,'adm:stats');verify(count(buttons())===3 && in_array('adm:users',routes(),true) && str_contains(screen()[1]['text'],'Awaiting review'),'statistics includes user directory and report action');
 incoming($user,'adm:statsreports');verify(routes()===['adm:doc:statsxlsx:0:all','adm:doc:statspdf:0:all','adm:stats'],'statistics export formats remain reachable');
 incoming($user,'adm:settings');verify(count(buttons())===2 && str_contains(screen()[1]['text'],'Deadline'),'owner setting stays in its own screen');
 incoming(93002,'adm:settings');verify(str_contains(screen()[1]['text'],'Owner access required'),'forged settings navigation still enforces owner');

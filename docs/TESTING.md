@@ -18,6 +18,12 @@ The simplified menu passed 28 interaction assertions, covering the smaller home/
 
 The base integration (63), HTTP (36), immediate-reply (21) and Telegram admin regression suites also passed. The latter now reports 58 assertions because the smaller list has fewer buttons to check against Telegram's callback-size limit; permission and document tests remain present. All changed PHP files pass syntax checks. The four-file updater was installed twice on a copy of the deployed admin release to check success and idempotency. Live Telegram rendering must still be checked after Ahost installation.
 
+## Bot-user directory validation
+
+The directory passed 36 additional assertions against synthetic users: existing visitors without submissions, first-seen/last-seen windows, disjoint progress categories, paused drafts, username/ID/date filters, pagination, unavailable fields, spreadsheet text preservation/formula protection, PDF generation, Telegram browsing/export, authorization and revocation before queued delivery. HTTP coverage now passes 47 assertions, including the new page, anonymous denial, escaped usernames, invalid filters, owner/reviewer access and filtered user XLSX/PDF downloads.
+
+The base integration, immediate-response, Telegram admin, simplified-menu and transport suites still pass. Desktop/mobile browser coverage now includes 18 page-layout checks; the new user-directory screenshots were inspected at widths 1440 and 390. Syntax checks pass. The four-file installer was exercised against a copy of the deployed About-message release and on a second idempotent run. Tests use fake Telegram transport and no production data. Hosting counts and live Telegram user-report delivery require verification after installation.
+
 ## Executed checks
 
 - **63 PHP integration assertions passed** against MariaDB: membership gating and recovery, exact Uzbek greeting/success text, own-contact enforcement, draft back/pause/resume, 20 MB rejection, private storage, document/photo acceptance, registration closure, duplicate updates/submissions, transactional failure/retry, business-day/holiday/timezone calculation, cohort/drop-off/overdue statistics, filtering and SQL injection handling, XLSX text cells, PDF/font output, queue deduplication/backoff/permanent errors, login/CSRF/roles, notes/ratings/audit, explicit notification preview/send, session revocation and login rate limiting.

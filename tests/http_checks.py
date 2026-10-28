@@ -36,12 +36,12 @@ status,body,h=anon.get('/webhook.php',raw=b'{}',headers={'Content-Type':'applica
 secret={'Content-Type':'application/json','X-Telegram-Bot-Api-Secret-Token':'test-webhook-secret-000000000000000000'}
 status,body,h=anon.get('/webhook.php',raw=b'{broken',headers=secret); check(status==400,'malformed webhook rejected')
 status,body,h=anon.get('/webhook.php',raw=b'{}',headers=secret); check(status==400,'webhook missing update ID rejected')
-update={'update_id':900001,'message':{'message_id':900001,'chat':{'id':900001,'type':'private'},'from':{'id':900001},'text':'/start'}}
+update={'update_id':900001,'message':{'message_id':900001,'chat':{'id':900001,'type':'private'},'from':{'id':900001,'username':'<script>visitor</script>'},'text':'/start'}}
 for i in range(2):
     status,body,h=anon.get('/webhook.php',raw=json.dumps(update).encode(),headers=secret); check(status==200 and json.loads(body)['ok'],'webhook accepts and acknowledges duplicate safely '+str(i))
 status,body,h=anon.get('/webhook.php',raw=b'x'*1048577,headers=secret); check(status==413,'oversized webhook rejected')
 owner=Client(); status,body,h=owner.login('owner@example.test','TestOwner!12345'); check(status==200 and b'Good ideas deserve' in body,'owner HTTP login and dashboard')
-for page in ['applications','application&id=1','statistics','queue','settings','team','account']:
+for page in ['applications','application&id=1','users','statistics','queue','settings','team','account']:
     status,body,h=owner.get('/?page='+page); check(status==200 and b'Fatal error' not in body,'admin page renders: '+page)
 status,body,h=owner.get('/?page=download&id=1'); check(status==200 and body==b'Fake private attachment: project101','authorized original attachment bytes preserved')
 check(h['Content-Type']=='application/octet-stream' and 'attachment;' in h['Content-Disposition'],'download forced as attachment')
@@ -50,7 +50,17 @@ status,body,h=owner.get('/?page=export&format=pdf&id=1'); check(status==200 and 
 status,body,h=owner.get('/?page=export&format=pdf&status=new'); check(status==200 and body.startswith(b'%PDF-'),'HTTP filtered PDF report')
 status,body,h=owner.get('/?page=export&scope=statistics&format=xlsx'); check(status==200 and zipfile.is_zipfile(io.BytesIO(body)),'HTTP statistics export')
 status,body,h=owner.get('/?page=applications&from=2026-02-31'); check(status==422,'invalid date filter returns validation error')
+status,body,h=anon.get('/?page=export&scope=users&format=xlsx'); check(status==401,'user directory export requires login')
+status,body,h=anon.get('/?page=users'); check(status==200 and b'Sign in to Pivot' in body and b'900001' not in body,'anonymous visitor cannot see user directory')
+status,body,h=owner.get('/?page=users&q=900001&stage=not_submitted'); check(status==200 and b'900001' in body and b'Not started' in body,'user directory includes visitor without application')
+check(b'&lt;script&gt;visitor&lt;/script&gt;' in body and b'<script>visitor</script>' not in body,'stored user fields are HTML escaped')
+status,body,h=owner.get('/?page=users&stage=invalid'); check(status==422,'invalid user stage is rejected')
+status,body,h=owner.get('/?page=users&from=2026-02-31'); check(status==422,'invalid user date is rejected')
+status,body,h=owner.get('/?page=export&scope=users&format=xlsx&q=900001'); check(status==200 and zipfile.is_zipfile(io.BytesIO(body)) and 'pivot-bot-users.xlsx' in h['Content-Disposition'],'filtered user workbook downloads')
+with zipfile.ZipFile(io.BytesIO(body)) as z: check(b'900001' in z.read('xl/sharedStrings.xml'),'user workbook contains non-applicant Telegram ID')
+status,body,h=owner.get('/?page=export&scope=users&format=pdf&q=900001'); check(status==200 and body.startswith(b'%PDF-') and 'pivot-bot-users.pdf' in h['Content-Disposition'],'filtered user PDF downloads')
 reviewer=Client(); status,body,h=reviewer.login('reviewer@example.test','TestReviewer!12345'); check(status==200 and b'Good ideas deserve' in body,'reviewer HTTP login')
+status,body,h=reviewer.get('/?page=users'); check(status==200 and b'900001' in body,'active reviewer can access bot users')
 for page in ['settings','team']:
     status,body,h=reviewer.get('/?page='+page); check(status==403,'reviewer denied '+page)
 status,body,h=reviewer.get('/?page=dashboard',{'action':'admin_create','csrf':reviewer.token('/?page=account'),'email':'bad@example.test','password':'UnsafeAccount!123','role':'owner'}); check(status==403,'reviewer cannot forge owner action')

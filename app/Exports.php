@@ -38,6 +38,29 @@ final class Exports {
         }
         $book->setActiveSheetIndex(0); ob_start(); (new Xlsx($book))->save('php://output'); $data=ob_get_clean(); $book->disconnectWorksheets(); return $data;
     }
+    public static function usersXlsx(array $users): string {
+        $book=new Spreadsheet();
+        $rows=[['Telegram ID','Username','Name provided','Phone shared','First interaction (Tashkent)','Last interaction (Tashkent)','Registration progress','Application reference','Application status','Last recorded successful membership check']];
+        foreach($users as $u) $rows[]=[$u['id'],$u['username']?'@'.$u['username']:'',$u['full_name'],$u['phone'],$u['first_seen'],$u['last_seen'],BotUsers::progress($u),$u['reference'],$u['status'],$u['membership_passed_at']];
+        self::sheet($book,'Bot users',$rows,true);
+        self::sheet($book,'Definitions',[
+            ['Users','Unique Telegram IDs with recorded private-chat interactions, including admins. Opening a chat without interacting is not recorded.'],
+            ['Names and phones','Shown only if provided during registration. Username is the latest recorded username, if available.'],
+            ['Dates','Asia/Tashkent. First/last recorded interaction, not Telegram online status. Date filters use first interaction.'],
+            ['Membership','A past successful check does not establish current channel subscription.'],
+        ]);
+        $book->setActiveSheetIndex(0); ob_start(); (new Xlsx($book))->save('php://output'); $data=ob_get_clean(); $book->disconnectWorksheets(); return $data;
+    }
+    public static function usersPdf(array $users,string $cache): string {
+        $e=self::escape(...);
+        $html='<html><head><meta charset="UTF-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:10px}section{page-break-inside:avoid;margin-bottom:18px}h2{font-size:13px}p{margin:5px 0;word-wrap:break-word}</style></head><body><h1>Pivot · Bot users</h1><p>Unique recorded Telegram IDs, including admins. Opening the chat alone is not tracked. Names and phones appear only if provided during registration. Dates: Asia/Tashkent. Membership checks are historical, not current subscription status.</p>';
+        foreach($users as $u) {
+            $html.='<section><h2>'.$e($u['id']).($u['username']?' · @'.$e($u['username']):'').'</h2>';
+            foreach(['full_name'=>'Name provided','phone'=>'Phone shared','first_seen'=>'First interaction','last_seen'=>'Last interaction','reference'=>'Application reference','status'=>'Application status','membership_passed_at'=>'Last successful membership check'] as $key=>$label) $html.='<p>'.$e($label).': '.$e($u[$key]??'—').'</p>';
+            $html.='<p>Registration: '.$e(BotUsers::progress($u)).'</p></section>';
+        }
+        return self::renderPdf($html.'</body></html>',$cache);
+    }
     public static function pdf(array $apps,?array $stats,string $cache): string {
         $e=self::escape(...); $html='<html><head><meta charset="UTF-8"><style>body{font-family:DejaVu Sans,sans-serif;font-size:10px;color:#172d2b}h1{font-size:22px}h2{font-size:15px}table{border-collapse:collapse;width:100%;margin-bottom:20px}td,th{border:1px solid #cad5d1;padding:6px;text-align:left;word-wrap:break-word}thead{display:table-header-group}.application{page-break-inside:avoid}</style></head><body><h1>Pivot Uzbekistan · Grand Demo Day</h1><p>Arizalar hisoboti · Asia/Tashkent</p>';
         foreach($apps as $a) {
@@ -55,6 +78,9 @@ final class Exports {
             }
         }
         $html.='<p>Ariza topshirish finalga qabul qilinish degani emas. Asl fayllar alohida yuklab olinadi.</p></body></html>';
+        return self::renderPdf($html,$cache);
+    }
+    private static function renderPdf(string $html,string $cache): string {
         $options=new Options(['isRemoteEnabled'=>false,'isPhpEnabled'=>false,'isJavascriptEnabled'=>false,'defaultFont'=>'DejaVu Sans','fontCache'=>$cache,'tempDir'=>$cache,'chroot'=>dirname(__DIR__).'/vendor/dompdf/dompdf']);
         $pdf=new Dompdf($options); $pdf->loadHtml($html,'UTF-8'); $pdf->setPaper('A4'); $pdf->render(); return $pdf->output();
     }

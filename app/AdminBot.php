@@ -71,9 +71,29 @@ final class AdminBot {
             $settings=$this->db->settings();
             $this->say('Registration is '.($settings['registration_open']==='1'?'enabled':'paused').".\nDeadline: ".$settings['deadline']." (Tashkent)\nThe deadline still applies when registration is enabled.",[[self::button($settings['registration_open']==='1'?'Pause registration':'Enable registration','registration:'.($settings['registration_open']==='1'?'0':'1'))]]);
         }
+        elseif($route==='users') $this->users();
+        elseif(preg_match('/^userlist:(all|not_submitted|not_started|draft|submitted):([0-9]{1,6})$/D',$route,$m)) $this->userListing($m[1],(int)$m[2]);
+        elseif(preg_match('/^user:([1-9][0-9]{0,15})$/D',$route,$m)) $this->userDetails((int)$m[1]);
+        elseif($route==='userfilters') {
+            $rows=[]; foreach(BotUsers::STAGES as $stage=>$label) $rows[]=[self::button($label,'userlist:'.$stage.':0')];
+            $this->say('Which bot users would you like to see?',$rows,$this->userBack());
+        }
+        elseif(preg_match('/^userreports:(all|not_submitted|not_started|draft|submitted)$/D',$route,$m)) {
+            $this->say('Download bot users · '.BotUsers::STAGES[$m[1]],[[self::button('Excel spreadsheet','userdoc:xlsx:'.$m[1])],[self::button('PDF report','userdoc:pdf:'.$m[1])]],$this->userBack());
+        }
+        elseif(preg_match('/^userdoc:(xlsx|pdf):(all|not_submitted|not_started|draft|submitted)$/D',$route,$m)) {
+            $filter=['stage'=>$m[2]];
+            if((new BotUsers($this->db))->count($filter)>($m[1]==='pdf'?300:10000)) { $this->say('Too many users for one report. Use filters or narrow the dates on the website.',[],$this->userBack()); return true; }
+            $key='telegram_export:'.$user;
+            if((int)$this->db->value('SELECT value FROM settings WHERE `key`=?',[$key])>time()-10) { $this->say('Please wait 10 seconds between document requests.',[],$this->userBack()); return true; }
+            $this->save($key,(string)time());
+            $this->queue->add('admin-doc:'.$update,$user,['chat_id'=>$user,'type'=>'users'.$m[1],'id'=>0,'filter'=>$filter,'_admin_id'=>(int)$admin['id']],'telegram_admin',null,'adminDocument');
+            $this->db->audit((int)$admin['id'],null,'telegram_users_export_requested',$m[1].' '.$m[2]);
+        }
         elseif($route==='stats') {
             $metrics=(new Statistics($this->db))->report()['metrics'];
-            $this->say("Statistics · all time\n\nApplications: ".$metrics['Applications submitted in period']."\nAwaiting review: ".$metrics['Pending reviews']."\nOverdue: ".$metrics['Overdue reviews']."\nCompletion rate: ".$metrics['Completion rate (%)']."%\n\nCompletion is measured from started applications.",[[self::button('Download report','statsreports')]]);
+            $users=(new BotUsers($this->db))->summary();
+            $this->say("Statistics\n\nBot users: ".$users['total']."\nNew users today: ".$users['new_today']."\nNo application submitted: ".($users['not_started']+$users['unfinished'])."\n\nApplications: ".$metrics['Applications submitted in period']."\nAwaiting review: ".$metrics['Pending reviews']."\nOverdue: ".$metrics['Overdue reviews']."\nCompletion rate: ".$metrics['Completion rate (%)']."%\n\nUser totals include admins and count recorded interactions. Completion is measured from started applications.",[[self::button('👥 Bot users','users')],[self::button('Download report','statsreports')]]);
         } elseif($route==='statsreports') {
             $this->say('Download statistics',[[self::button('Excel spreadsheet','doc:statsxlsx:0:all')],[self::button('PDF report','doc:statspdf:0:all')]],'stats');
         } elseif(preg_match('/^doc:(original|applicationpdf|xlsx|pdf|statsxlsx|statspdf):([0-9]{1,10}):(all|[0-4])$/D',$route,$m)) {
@@ -111,6 +131,34 @@ final class AdminBot {
         $this->say("Pivot admin · ".$this->admin['role']."\n\n$pending applications awaiting review.\nWhat would you like to do?",$rows,null);
     }
     private static function filter(string $status): array { return $status==='all'?[]:['status'=>Applications::STATUSES[(int)$status]]; }
+    private function users(): void {
+        $s=(new BotUsers($this->db))->summary();
+        $this->say("Bot users\n\nTotal: ".$s['total']."\nNew today: ".$s['new_today']."\nInteracted in last 7 days: ".$s['active_7_days']."\n\nNot started: ".$s['not_started']."\nUnfinished (including paused): ".$s['unfinished']."\nSubmitted: ".$s['submitted']."\n\nIncludes admins. Opening the chat without interacting is not counted. Dates use Tashkent time.",[[self::button('Browse users','userlist:all:0')]],'stats');
+    }
+    private function userBack(): string {
+        $value=(string)$this->db->value('SELECT value FROM settings WHERE `key`=?',['telegram_userlist:'.$this->user]);
+        return preg_match('/^(all|not_submitted|not_started|draft|submitted):[0-9]{1,6}$/D',$value)?'userlist:'.$value:'userlist:all:0';
+    }
+    private function userListing(string $stage,int $page): void {
+        $users=new BotUsers($this->db); $filter=['stage'=>$stage]; $total=$users->count($filter);
+        $page=min($page,max(0,(int)ceil($total/4)-1)); $rows=[];
+        $this->save('telegram_userlist:'.$this->user,$stage.':'.$page);
+        foreach($users->search($filter,4,$page*4) as $u) {
+            $label=$u['username']?'@'.$u['username']:($u['full_name']?:'User');
+            $rows[]=[self::button(mb_substr($label,0,30).' · '.$u['id'],'user:'.$u['id'])];
+        }
+        $nav=[]; if($page>0) $nav[]=self::button('← Previous','userlist:'.$stage.':'.($page-1));
+        if(($page+1)*4<$total) $nav[]=self::button('Next →','userlist:'.$stage.':'.($page+1));
+        if($nav) $rows[]=$nav;
+        $rows[]=[self::button('Filter','userfilters'),self::button('Download list','userreports:'.$stage)];
+        $this->say('Bot users · '.BotUsers::STAGES[$stage]."\n$total users · Page ".($page+1)."\n\n".($total?'Choose a user to see their details.':'No users match this filter.'),$rows,'users');
+    }
+    private function userDetails(int $id): void {
+        $u=(new BotUsers($this->db))->get($id);
+        if(!$u) { $this->say('User not found.',[],$this->userBack()); return; }
+        $rows=[]; if($u['application_id']!==null) $rows[]=[self::button('View application','app:'.$u['application_id'])];
+        $this->say('Telegram ID: '.$u['id']."\nUsername: ".($u['username']?'@'.$u['username']:'Not available')."\nName provided: ".($u['full_name']?:'Not provided')."\nPhone shared: ".($u['phone']?:'Not provided')."\n\nFirst interaction: ".$u['first_seen']."\nLast interaction: ".$u['last_seen']."\nTimes: Tashkent\n\nRegistration: ".BotUsers::progress($u).($u['reference']?"\nApplication: ".$u['reference']."\nReview status: ".$u['status']:'')."\n\nLast successful channel check: ".($u['membership_passed_at']?:'None recorded')."\nThis is a past check, not current subscription status.",$rows,$this->userBack());
+    }
     private function listing(string $status,int $page): void {
         $apps=new Applications($this->db); $filter=self::filter($status); $total=$apps->count($filter);
         $page=min($page,max(0,(int)ceil($total/4)-1)); $rows=[];
@@ -176,16 +224,24 @@ final class AdminBot {
                 if(!$base || !$path || dirname($path)!==$base || !is_file($path) || !is_readable($path)) throw new TelegramException(404);
                 $name=$record['file_name']; $mime='application/octet-stream';
             } else {
-                $statsOnly=in_array($type,['statsxlsx','statspdf'],true); $format=in_array($type,['xlsx','statsxlsx'],true)?'xlsx':'pdf';
+                $usersOnly=in_array($type,['usersxlsx','userspdf'],true);
+                $statsOnly=in_array($type,['statsxlsx','statspdf'],true); $format=in_array($type,['xlsx','statsxlsx','usersxlsx'],true)?'xlsx':'pdf';
                 $apps=new Applications($db); $filter=$payload['filter'];
-                if(!$statsOnly && !$record && $apps->count($filter)>($format==='pdf'?300:10000)) throw new TelegramException(400);
-                $rows=$record?[$record]:($statsOnly?[]:$apps->search($filter,10000));
-                $stats=$statsOnly?(new Statistics($db))->report():null;
-                $body=$format==='xlsx'?Exports::xlsx($rows,$stats):Exports::pdf($rows,$stats,$config['storage'].'/cache');
+                if($usersOnly) {
+                    $users=new BotUsers($db);
+                    if($users->count($filter)>($format==='pdf'?300:10000)) throw new TelegramException(400);
+                    $rows=$users->search($filter,10000);
+                    $body=$format==='xlsx'?Exports::usersXlsx($rows):Exports::usersPdf($rows,$config['storage'].'/cache');
+                } else {
+                    if(!$statsOnly && !$record && $apps->count($filter)>($format==='pdf'?300:10000)) throw new TelegramException(400);
+                    $rows=$record?[$record]:($statsOnly?[]:$apps->search($filter,10000));
+                    $stats=$statsOnly?(new Statistics($db))->report():null;
+                    $body=$format==='xlsx'?Exports::xlsx($rows,$stats):Exports::pdf($rows,$stats,$config['storage'].'/cache');
+                }
                 $temp=tempnam($config['storage'].'/cache','tg-export-');
                 if($temp===false) throw new \RuntimeException('Export storage unavailable');
                 if(!chmod($temp,0600) || file_put_contents($temp,$body)!==strlen($body)) throw new \RuntimeException('Cannot write export');
-                $path=$temp; $name='pivot-'.($statsOnly?'statistics':($record?$record['reference']:'applications')).'.'.$format;
+                $path=$temp; $name='pivot-'.($usersOnly?'bot-users':($statsOnly?'statistics':($record?$record['reference']:'applications'))).'.'.$format;
                 $mime=$format==='pdf'?'application/pdf':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
             }
             if(filesize($path)>50*1024*1024) throw new TelegramException(400);

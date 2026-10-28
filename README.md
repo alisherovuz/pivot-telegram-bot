@@ -12,6 +12,8 @@ For installations with that panel already enabled, the [simpler admin menu updat
 
 The [Demo Day announcement update](docs/ABOUT-UPDATE.md) sends the supplied season 4 message with Telegram bold formatting. Its combined ZIP also includes the simpler menu and accepts either installed admin version.
 
+The [Bot users update](docs/BOT-USERS.md) adds audience counts and a searchable user directory, including visitors without submitted applications. Find it under Statistics in Telegram and Bot users on the website, with filtered Excel/PDF exports.
+
 ## Start here
 
 - [Ahost/cPanel installation, BotFather, webhook and cron guide](docs/DEPLOYMENT.md)
