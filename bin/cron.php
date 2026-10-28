@@ -17,7 +17,7 @@ try {
         $processed+=$worker->processUser($user,10,max(0.1,20-(microtime(true)-$start)));
     }
     $db->run("INSERT IGNORE INTO reminders(application_id,created_at) SELECT id,NOW() FROM applications WHERE review_due_at<NOW() AND status IN ('new','under review')");
-    $queue=new Pivot\Queue($db,$telegram);
+    $queue=new Pivot\Queue($db,$telegram,$config);
     while(microtime(true)-$start<40) { if(!$queue->deliver(1)) break; $delivered++; if($delivered>=30) break; }
     echo "Processed $processed updates; attempted $delivered deliveries.\n";
 } finally { $db->run('SELECT RELEASE_LOCK(?)',[$lock]); }

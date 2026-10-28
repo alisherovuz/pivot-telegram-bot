@@ -7,7 +7,8 @@ final class Telegram implements TelegramTransport
     public function __construct(private string $token) {}
     public function call(string $method, array $data): array {
         $ch=curl_init('https://api.telegram.org/bot'.$this->token.'/'.$method);
-        curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>json_encode($data,JSON_THROW_ON_ERROR),CURLOPT_HTTPHEADER=>['Content-Type: application/json'],CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>5,CURLOPT_TIMEOUT=>20,CURLOPT_PROTOCOLS=>CURLPROTO_HTTPS]);
+        $multipart=($data['document']??null) instanceof \CURLFile;
+        curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>$multipart?$data:json_encode($data,JSON_THROW_ON_ERROR),CURLOPT_HTTPHEADER=>$multipart?[]:['Content-Type: application/json'],CURLOPT_RETURNTRANSFER=>true,CURLOPT_CONNECTTIMEOUT=>5,CURLOPT_TIMEOUT=>$multipart?45:20,CURLOPT_PROTOCOLS=>CURLPROTO_HTTPS]);
         $raw=curl_exec($ch); $code=(int)curl_getinfo($ch,CURLINFO_HTTP_CODE); curl_close($ch);
         if ($raw===false) { throw new TelegramException(503); }
         $r=json_decode($raw,true);

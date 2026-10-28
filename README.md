@@ -6,6 +6,8 @@ PHP 8.3+ and MySQL/MariaDB application for Ahost shared hosting. Telegram sends 
 
 Install the [immediate-reply update](docs/FAST-REPLIES.md) to remove the original once-per-minute conversational delay. The original `dist/pivot-deployment.zip` is preserved unchanged; existing and new installations using that archive need this small update.
 
+Then install the [Telegram admin update](docs/TELEGRAM-ADMIN.md) and link your numeric Telegram ID to an existing admin account. The private `/admin` panel supports applications, original documents, Excel/PDF reports, statistics, confirmed status changes, explicit applicant messages, and owner registration controls.
+
 ## Start here
 
 - [Ahost/cPanel installation, BotFather, webhook and cron guide](docs/DEPLOYMENT.md)

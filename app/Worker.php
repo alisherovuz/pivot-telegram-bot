@@ -44,7 +44,7 @@ final class Worker
         $user = self::userId($update);
         $start = microtime(true);
         $this->processUser($user);
-        $queue = new Queue($this->db, $this->telegram);
+        $queue = new Queue($this->db, $this->telegram, $this->config);
         // Reply now, only to this conversation. Cron handles backoff and remaining work.
         for ($i = 0; $i < 8 && microtime(true)-$start < 20; $i++) {
             if (!$queue->deliver(1, $user)) break;
