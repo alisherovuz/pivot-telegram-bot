@@ -6,6 +6,23 @@ final class Bot
     public const APPLY='🚀 Demo Day — Ariza topshirish';
     public const STATUS='📋 Arizam holati';
     public const ABOUT='ℹ️ Demo Day haqida';
+    public const ABOUT_HTML=<<<'HTML'
+📣 <b>Grand Demo Day 4-mavsum —</b> <b>Startup Garage va Yandex Uzbekistan hamkorligida o’tkazilmoqda.</b>⚡️
+
+Startapingiz bormi? Loyihangizni investorlar va soha mutaxassislariga taqdim etish imkoniyatini qo‘ldan boy bermang.
+
+📊Grand Demo Day’ning oldingi 3 mavsumida <b>33 ta startup</b> sahnaga chiqdi va jami <b>$450,000 soft commitment</b> olindi.
+
+🎉Endi navbat 4-mavsumga.
+
+Saralash jarayonidan o‘tgan jamoalar <b>19-noyabr kuni Yandex Uzbekistan ofisida</b> bo‘lib o‘tadigan <b>Grand Demo Day</b> sahnasida o‘z loyihalarini taqdim etadi.
+
+Finalga chiqqan startaplarni investorlar bilan uchrashuvlar, yangi aloqalar, ekspertlar fikri va investitsiya imkoniyatlari kutmoqda.
+
+<b>Keyingi investitsiya oladigan startup sizniki bo‘lishi mumkin.</b>
+
+🔔Saralashda ishtirok etish uchun hoziroq bot orqali ro'yxatdan o'ting.
+HTML;
     public const PROMPTS=[
         'name'=>'1️⃣ Ism Familiyangizni kiriting',
         'startup'=>'2️⃣ Startup nomini kiriting',
@@ -37,8 +54,9 @@ final class Bot
             throw $e;
         }
     }
-    private function say(int $user,string $text,?array $markup=null): void {
+    private function say(int $user,string $text,?array $markup=null,?string $parseMode=null): void {
         $payload=['chat_id'=>$user,'text'=>$text]; if($markup!==null) $payload['reply_markup']=$markup;
+        if($parseMode!==null) $payload['parse_mode']=$parseMode;
         $this->queue->add('update:'.$this->updateId.':'.++$this->sequence,$user,$payload);
     }
     public static function menu(): array { return ['keyboard'=>[[['text'=>self::APPLY]],[['text'=>self::STATUS],['text'=>self::ABOUT]]],'resize_keyboard'=>true]; }
@@ -69,7 +87,7 @@ final class Bot
         $settings=$this->db->settings(); $draft=$this->db->one('SELECT * FROM drafts WHERE user_id=?',[$user]);
         $app=$this->db->one('SELECT * FROM applications WHERE user_id=?',[$user]);
         if($text===self::ABOUT || $text==='/about') {
-            $this->say($user,$settings['event_title']."\nStartup Garage va Yandex Uzbekistan tashkil etadi.\n".$settings['event_date'].' · '.$settings['event_time']." (Asia/Tashkent)\n".$settings['venue']."\n\nAriza topshirish finalga qabul qilinish degani emas. Bu Pivot botining alohida ariza bazasi; @SGdemodaybot bilan sinxronlanmaydi.\nYordam: ".$settings['support'],self::menu()); return;
+            $this->say($user,self::ABOUT_HTML,self::menu(),'HTML'); return;
         }
         if($text===self::STATUS || $text==='/status') {
             $this->say($user,$app?'Ariza: '.$app['reference']."\nHolati: ".self::statusLabel($app['status'])."\nKo‘rib chiqish muddati: ".$app['review_due_at'].' (Asia/Tashkent)':($draft?'Tugallanmagan arizangiz saqlangan. Ariza topshirish tugmasi orqali davom eting.':'Hozircha arizangiz yo‘q.'),self::menu()); return;

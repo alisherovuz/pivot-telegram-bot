@@ -10,6 +10,8 @@ Then install the [Telegram admin update](docs/TELEGRAM-ADMIN.md) and link your n
 
 For installations with that panel already enabled, the [simpler admin menu update](docs/SIMPLE-ADMIN.md) reduces visible controls and edits menus in place. Existing admin links are preserved.
 
+The [Demo Day announcement update](docs/ABOUT-UPDATE.md) sends the supplied season 4 message with Telegram bold formatting. Its combined ZIP also includes the simpler menu and accepts either installed admin version.
+
 ## Start here
 
 - [Ahost/cPanel installation, BotFather, webhook and cron guide](docs/DEPLOYMENT.md)
